@@ -1,2 +1,2 @@
-# MaastrichtAI
-assignments of Maastricht AI courses
+# MaastrichtAI-PSO
+the PSO assignments of Maastricht AI course
