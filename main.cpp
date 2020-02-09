@@ -133,6 +133,38 @@ double evalfunc(double parameter[], int FUNC = 1)
     }
 }
 
+/*          评估函数的导数            */
+/* 通过参数FUNC来选择想要的评估函数的导数 */
+double evalfunc_derivative_x(double parameter[], int FUNC = 1)
+{
+    if (FUNC == 1)
+    {
+        double val = 0;
+        val = 2 * parameter[0] * (1 - 2 * (parameter[1]  - pow(parameter[0],2)));
+        return val;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+/*          评估函数的导数            */
+/* 通过参数FUNC来选择想要的评估函数的导数 */
+double evalfunc_derivative_y(double parameter[], int FUNC = 1)
+{
+    if (FUNC == 1)
+    {
+        double val = 0;
+        val = 2 * (parameter[1]  - pow(parameter[0],2));
+        return val;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 /*  初始化每个粒子的速度、位置并将  */
 /*  该位置设定为当前历史最优位置找  */
 /*  到所有粒子的最优位置并设定为当  */
@@ -224,10 +256,15 @@ void update(int interation, int w_change_method = 1)
         v_ellipse[0] = 0.05 * sqrt(pow(particles[j].v[0],2) + pow(particles[j].v[1],2)) * ellipse_random(particles[j])[0];
         v_ellipse[1] = 0.05 * sqrt(pow(particles[j].v[0],2) + pow(particles[j].v[1],2)) * ellipse_random(particles[j])[1];
         cout << j << '\t' << sqrt(pow(particles[j].v[0],2) + pow(particles[j].v[1],2)) <<  '\t' << v_ellipse[0] << '\t' << v_ellipse[1] << endl;
+
+        double v_derivative[NVARS];
+        v_derivative[0]  = 0.05 * evalfunc_derivative_x(particles[j].x);
+        v_derivative[1]  = 0.05 * evalfunc_derivative_y(particles[j].x);
+
         for (i = 0; i < NVARS; i++)
         {
             v = w*particles[j].v[i] + c1*randval(0, 1)*(particles[j].pBest[i] - particles[j].x[i])
-                    + c2*randval(0, 1)*(gBest[i] - particles[j].x[i]) + v_ellipse[i];
+                    + c2*randval(0, 1)*(gBest[i] - particles[j].x[i]) + v_ellipse[i] + v_derivative[i];
             if (v > vmax)
             {
                 particles[j].v[i] = vmax;
