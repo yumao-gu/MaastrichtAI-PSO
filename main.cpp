@@ -22,6 +22,7 @@ struct particle{                          //单个粒子
     double x[NVARS];
     double upper[NVARS];
     double lower[NVARS];
+    int id;
 };
 
 double w;                                  //惯量权重
@@ -31,6 +32,7 @@ double absbound;                           //上下界绝对值
 double vmax;                               //最大速度
 double gBest[NVARS];                       //全局最优解
 double gBest_val;                          //全局最优值
+int gBest_id;                              //全局最优id;
 particle particles[POPSIZE];               //粒子群
 
 double evalfunc(double[], int);            //评估函数
@@ -45,12 +47,14 @@ void show();                               //可视化
 vector<double>  ellipse_random(particle p);
 double particle_distance(particle,double[]);
 double val_difference(particle,double);
+bool adjacent_id(particle,int);
 
 /*  简单的数值映射到(0,1) */
 double simple_val_map(double val)
 {
     return val/(sqrt(1 + pow(val,2)));
 }
+
 /*  计算当前粒子距离全局最优粒子距离　*/
 double particle_distance(particle p,double gbest[])
 {
@@ -63,6 +67,17 @@ double val_difference(particle p ,double gBest_val)
     return abs(evalfunc(p.x,FUNC_TYPE) - gBest_val);
 }
 
+/*  判断是否关系临近全局最优　*/
+bool adjacent_id(particle p,int gBest_id)
+{
+    return (abs(p.id - gBest_id)  < 3) || (abs(p.id + POPSIZE - gBest_id)  < 3) || (abs(gBest_id + POPSIZE - p.id)  < 3);
+}
+
+/*  符号函数　　*/
+int sign(bool flag)
+{
+    return flag?1:-1;
+}
 
 /*　圆上随机产生一个向量作为随机游走　*/
 vector<double> ellipse_random(particle p)
@@ -190,6 +205,7 @@ void initialize()
             particles[j].v[i] = randval(lbound[i], ubound[i]);
             particles[j].x[i] = randval(lbound[i], ubound[i]);
             particles[j].pBest[i] = particles[j].x[i];
+            particles[j].id = j;
         }
     }
 
@@ -263,8 +279,13 @@ void update(int interation, int w_change_method = 1)
 
         for (i = 0; i < NVARS; i++)
         {
+//            v = w*particles[j].v[i] + c1*randval(0, 1)*(particles[j].pBest[i] - particles[j].x[i])
+//                    + c2*randval(0, 1)*(gBest[i] - particles[j].x[i]) + v_ellipse[i] + v_derivative[i];
             v = w*particles[j].v[i] + c1*randval(0, 1)*(particles[j].pBest[i] - particles[j].x[i])
-                    + c2*randval(0, 1)*(gBest[i] - particles[j].x[i]) + v_ellipse[i] + v_derivative[i];
+                + sign(interation < MAXINTERATION/3) * sign(adjacent_id(particles[j],gBest_id)) * c2 * randval(0, 1)
+                * pow((gBest[i] - particles[j].x[i]),sign(adjacent_id(particles[j],gBest_id)) * sign(interation < MAXINTERATION/3))
+                + v_ellipse[i] + v_derivative[i];
+
             if (v > vmax)
             {
                 particles[j].v[i] = vmax;
@@ -357,7 +378,7 @@ int main()
         update(i,W_CHANGE_METHOD);
         evaluate();
         fit();
-        if(i % 2  == 0)
+        if(i % 10  == 0)
         {
             show();
         }
